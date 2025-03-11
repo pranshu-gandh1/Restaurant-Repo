@@ -35,6 +35,8 @@ How to see the balance?
 On top of the order page you can see your current balance.
 How to contact?
 There is a contact page in the contact page and you can go there by clicking on  on the top left of the screen (browser) and then going to the Contact page where you can see who you can contact and the address.
+What is the item?
+You can see the description of the item right below the item to get a better idea of what it is.
 Extensions Used In My Code:
 In-App Purchases - As discussed with the teacher, we got as far as we could but due to lack of time couldn’t implement it into the code.
 Animations In Flutter extension - Used implicit animations called “AnimatedOpacity” to fade menu items when they are not in the cart and “AnimatedSize” to resize the “IconButton” when an item is added.
