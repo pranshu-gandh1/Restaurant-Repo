@@ -33,18 +33,18 @@ class MyApp extends StatelessWidget {
 // The app state (state management using ChangeNotifier)
 class MyAppState extends ChangeNotifier {
   // Menu items list with names and prices
-  final List<Map<String, dynamic>> menuItems = [
-    {'name': 'Pizza', 'price': 12.5},
-    {'name': 'Burger', 'price': 8.0},
-    {'name': 'Pasta', 'price': 10.0},
-    {'name': 'Sushi', 'price': 15.0},
-    {'name': 'Salad', 'price': 7.0},
-    {'name': 'Steak', 'price': 20.0},
-    {'name': 'Tacos', 'price': 9.5},
-    {'name': 'Soup', 'price': 6.5},
-    {'name': 'Ice Cream', 'price': 5.0},
-    {'name': 'Cake', 'price': 6.0},
-  ];
+final List<Map<String, dynamic>> menuItems = [
+  {'name': 'Pizza', 'price': 12.5, 'description': 'Cheesy, oven-baked with fresh toppings.'},
+  {'name': 'Burger', 'price': 8.0, 'description': 'Juicy beef patty with fresh lettuce and tomato.'},
+  {'name': 'Pasta', 'price': 10.0, 'description': 'Classic Italian pasta with rich tomato sauce.'},
+  {'name': 'Sushi', 'price': 15.0, 'description': 'Fresh sushi rolls with wasabi and soy sauce.'},
+  {'name': 'Salad', 'price': 7.0, 'description': 'Crisp greens with a tangy vinaigrette.'},
+  {'name': 'Steak', 'price': 20.0, 'description': 'Grilled to perfection with a side of veggies.'},
+  {'name': 'Tacos', 'price': 9.5, 'description': 'Spicy and flavorful, served with salsa.'},
+  {'name': 'Soup', 'price': 6.5, 'description': 'Warm and comforting, made fresh daily.'},
+  {'name': 'Ice Cream', 'price': 5.0, 'description': 'Creamy and delicious, available in many flavors.'},
+  {'name': 'Cake', 'price': 6.0, 'description': 'Soft and fluffy with a sweet frosting.'},
+];
 
   // Cart where items will be stored when added
   final List<Map<String, dynamic>> cart = [];
@@ -194,7 +194,8 @@ class MenuPage extends StatelessWidget {
       curve: Curves.easeInOut, // Easing curve for smooth animation
       opacity: quantity > 0 ? 1.0 : 0.5,  // Set opacity to 1 if the item is in the cart, else 0.5
       child: ListTile(
-        title: Text('${item['name']} (x$quantity) - \$${item['price']}'), // Display item name, quantity, and price
+        title: Text('${item['name']} (x$quantity) - \$${item['price']}'),
+        subtitle: Text(item['description'], style: TextStyle(fontSize: 12, color: Colors.grey)),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
