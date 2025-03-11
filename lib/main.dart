@@ -1,28 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:logging/logging.dart';
 
+// Main function where the app is initialized with ChangeNotifierProvider
 void main() {
   runApp(ChangeNotifierProvider(
-    create: (context) => MyAppState(),
-    child: const MyApp(),
+    create: (context) => MyAppState(), // Provides the app's state for state management
+    child: const MyApp(), // The main MyApp widget
   ));
 }
 
+// MyApp class sets up the MaterialApp for the app with basic theme and home page
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Restaurant Menu',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: const HomePage(),
+      title: 'Restaurant Menu', // Title of the app
+      theme: ThemeData(
+        primarySwatch: Colors.blue, // Primary color for the app
+        scaffoldBackgroundColor: Colors.white, // Background color of the scaffold
+        textTheme: TextTheme(
+          bodyLarge: TextStyle(color: Colors.black), // Text color for body large
+          bodyMedium: TextStyle(color: Colors.black), // Text color for body medium
+        ),
+      ),
+      home: const HomePage(), // The home page of the app
     );
   }
 }
 
+// The app state (state management using ChangeNotifier)
 class MyAppState extends ChangeNotifier {
+  // Menu items list with names and prices
   final List<Map<String, dynamic>> menuItems = [
     {'name': 'Pizza', 'price': 12.5},
     {'name': 'Burger', 'price': 8.0},
@@ -36,70 +46,89 @@ class MyAppState extends ChangeNotifier {
     {'name': 'Cake', 'price': 6.0},
   ];
 
+  // Cart where items will be stored when added
   final List<Map<String, dynamic>> cart = [];
-  double bankBalance = 50.0;
-  static const double dutchTax = 0.21;
-  static const double deliveryFee = 5.0;
+  double bankBalance = 50.0; // Starting balance for the user
+  static const double dutchTax = 0.21; // Tax rate for Dutch transactions
+  static const double deliveryFee = 5.0; // Flat delivery fee
 
+  // Getter for the count of items in the cart
   int get cartItemCount => cart.length;
 
+  // Add item to the cart
   void addToCart(Map<String, dynamic> item) {
-    if (!cart.any((cartItem) => cartItem['name'] == item['name'] && cartItem['price'] == item['price'])) {
-      print("Adding ${item['name']} to cart");
-      cart.add(item);
-      notifyListeners();
+    // Find an existing item in the cart or create a new one if not found
+    var cartItem = cart.firstWhere(
+      (cartItem) => cartItem['name'] == item['name'],
+      orElse: () => {},
+    );
+
+    // If item exists, increment quantity, else add it to the cart
+    if (cartItem.isNotEmpty) {
+      cartItem['quantity'] += 1;
     } else {
-      print("${item['name']} is already in the cart.");
+      cart.add({'name': item['name'], 'price': item['price'], 'quantity': 1});
     }
+    notifyListeners(); // Notify listeners to update the UI
   }
 
+  // Remove item from the cart
   void removeFromCart(Map<String, dynamic> item) {
-    print("Removing ${item['name']} from cart");
-    cart.remove(item);
-    notifyListeners();
+    var cartItem = cart.firstWhere(
+      (cartItem) => cartItem['name'] == item['name'],
+      orElse: () => {},
+    );
+
+    // If item exists, decrement quantity or remove it if quantity is 1
+    if (cartItem.isNotEmpty) {
+      if (cartItem['quantity'] > 1) {
+        cartItem['quantity'] -= 1;
+      } else {
+        cart.remove(cartItem);
+      }
+    }
+    notifyListeners(); // Notify listeners to update the UI
   }
 
+  // Calculate total cost including tax and delivery fee
   double calculateTotalCost() {
-    double totalCost = cart.fold(0, (sum, item) => sum + item['price']);
-    double tax = totalCost * dutchTax;
-    print("Calculating total cost: \$${totalCost.toStringAsFixed(2)} + tax: \$${tax.toStringAsFixed(2)} + delivery fee: \$${deliveryFee.toStringAsFixed(2)}");
-    return totalCost + tax + deliveryFee;
+    double totalCost = cart.fold(0, (sum, item) => sum + (item['price'] * item['quantity']));
+    double tax = totalCost * dutchTax; // Tax calculation
+    return totalCost + tax + deliveryFee; // Return total cost including tax and delivery
   }
 
+  // Place the order by deducting the total cost from the bank balance
   void placeOrder() {
     double totalCost = calculateTotalCost();
-    print("Placing order. Total cost: \$${totalCost.toStringAsFixed(2)}");
-    print("Current bank balance: \$${bankBalance.toStringAsFixed(2)}");
-    if (bankBalance >= totalCost) {
-      bankBalance -= totalCost;
-      cart.clear();
-      print("Order placed successfully. New bank balance: \$${bankBalance.toStringAsFixed(2)}");
-      notifyListeners();
-    } else {
-      print("Not enough balance to place the order. Current balance: \$${bankBalance.toStringAsFixed(2)}");
+    if (bankBalance >= totalCost) { // Ensure there's enough balance to place the order
+      bankBalance -= totalCost; // Deduct total cost from the balance
+      cart.clear(); // Clear the cart after placing the order
+      notifyListeners(); // Notify listeners to update the UI
     }
   }
 
+  // Update the bank balance
   void updateBalance(double amount) {
-    print("Updating bank balance to \$${amount.toStringAsFixed(2)}");
     bankBalance = amount;
-    notifyListeners();
+    notifyListeners(); // Notify listeners to update the UI
   }
 }
 
+// HomePage widget where the main structure of the screen is displayed
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Restaurant Menu')),
-      drawer: const AppDrawer(),
-      body: const MenuPage(),
+      appBar: AppBar(title: const Text('Restaurant Menu')), // AppBar with title
+      drawer: const AppDrawer(), // Drawer with menu options
+      body: const MenuPage(), // Main content showing the menu
     );
   }
 }
 
+// AppDrawer widget displays the side menu with navigation options
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 
@@ -110,123 +139,214 @@ class AppDrawer extends StatelessWidget {
         padding: EdgeInsets.zero,
         children: [
           const DrawerHeader(
-            decoration: BoxDecoration(color: Colors.blue),
-            child: Text('Menu', style: TextStyle(color: Colors.white, fontSize: 24)),
+            decoration: BoxDecoration(color: Colors.blue), // Drawer header style
+            child: Text('Menu App', style: TextStyle(color: Colors.white, fontSize: 24)), // Title in drawer
           ),
-          _buildDrawerItem(context, 'Ordering', const MenuPage()),
-          _buildDrawerItem(context, 'Placing Order', const CartPage()),
-          _buildDrawerItem(context, 'Contact', const ContactPage()),
-        ],
+          ListTile(
+            title: const Text('Home'), // Home option
+            onTap: () => Navigator.pop(context), // Close the drawer
+          ),
+          ListTile(
+            title: const Text('Order'), // Navigate to the order page
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const OrderPage()),
+            ),
+          ),
+          ListTile(
+            title: const Text('Contact'), // Navigate to the contact page
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ContactPage()),
+            ),
+          ),
+        ], // List of menu items in the drawer
       ),
-    );
-  }
-
-  ListTile _buildDrawerItem(BuildContext context, String title, Widget page) {
-    return ListTile(
-      title: Text(title),
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => page)),
     );
   }
 }
 
+// MenuPage widget that displays the list of menu items and allows adding/removing items from the cart
 class MenuPage extends StatelessWidget {
   const MenuPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    var appState = context.watch<MyAppState>();
+    var appState = context.watch<MyAppState>(); // Watch for state changes in appState
     return ListView(
-      padding: const EdgeInsets.all(20),
-      children: appState.menuItems.map((item) => _buildMenuItem(context, item)).toList(),
+      padding: const EdgeInsets.all(20), // Padding around the menu list
+      children: appState.menuItems.map((item) => _buildMenuItem(context, item)).toList(), // Build list of menu items
     );
   }
 
+  // Helper function to build each individual menu item with a shopping cart icon
   Widget _buildMenuItem(BuildContext context, Map<String, dynamic> item) {
-    var appState = context.watch<MyAppState>();
-    bool isItemInCart = appState.cart.any((cartItem) => cartItem['name'] == item['name'] && cartItem['price'] == item['price']);
+    var appState = context.watch<MyAppState>(); // Access app state to check cart
+    var cartItem = appState.cart.firstWhere(
+      (cartItem) => cartItem['name'] == item['name'],
+      orElse: () => {},
+    );
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 500),
-      margin: const EdgeInsets.symmetric(vertical: 5),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        color: isItemInCart ? Colors.green.shade100 : Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: isItemInCart ? Colors.greenAccent.withAlpha(127) : Colors.grey.withAlpha(50),
-            blurRadius: 5,
-          )
-        ],
-      ),
+    int quantity = cartItem.isNotEmpty ? cartItem['quantity'] : 0; // Get quantity of item in the cart, default to 0
+
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 500), // Animation duration for fade-in effect
+      curve: Curves.easeInOut, // Easing curve for smooth animation
+      opacity: quantity > 0 ? 1.0 : 0.5,  // Set opacity to 1 if the item is in the cart, else 0.5
       child: ListTile(
-        title: Text(item['name']),
-        subtitle: Text('Price: \$${item['price']}'),
-        trailing: IconButton(
-          icon: Icon(Icons.add_shopping_cart, color: isItemInCart ? Colors.green : Colors.black),
-          onPressed: () => appState.addToCart(item),
+        title: Text('${item['name']} (x$quantity) - \$${item['price']}'), // Display item name, quantity, and price
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Button to remove item from the cart
+            IconButton(
+              icon: Icon(Icons.remove_circle, color: quantity > 0 ? Colors.red : Colors.grey),
+              onPressed: quantity > 0 ? () => appState.removeFromCart(item) : null,
+            ),
+
+            // Animated button to add item to the cart, enlarges when added
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              child: IconButton(
+                iconSize: quantity > 0 ? 32 : 24, // Change icon size when item is added
+                icon: Icon(Icons.add_shopping_cart, color: quantity > 0 ? Colors.green : Colors.black),
+                onPressed: () => appState.addToCart(item),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class CartPage extends StatelessWidget {
-  const CartPage({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    var appState = context.watch<MyAppState>();
-    return Scaffold(
-      appBar: AppBar(title: const Text('Cart')),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(20),
-              children: appState.cart.map((item) => _buildCartItem(context, item)).toList(),
-            ),
-          ),
-          _buildSummary(context, appState),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCartItem(BuildContext context, Map<String, dynamic> item) {
-    var appState = context.watch<MyAppState>();
-    return ListTile(
-      title: Text(item['name']),
-      subtitle: Text('Price: \$${item['price']}'),
-      trailing: IconButton(
-        icon: const Icon(Icons.remove_circle, color: Colors.red),
-        onPressed: () => appState.removeFromCart(item),
-      ),
-    );
-  }
-
-  Widget _buildSummary(BuildContext context, MyAppState appState) {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          Text('Total: \$${appState.calculateTotalCost().toStringAsFixed(2)}'),
-          ElevatedButton(onPressed: appState.placeOrder, child: const Text('Place Order')),
-        ],
-      ),
-    );
-  }
-}
-
+// ContactPage widget that displays the restaurant's contact details.
 class ContactPage extends StatelessWidget {
   const ContactPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Contact Us')),
-      body: const Padding(
-        padding: EdgeInsets.all(20),
-        child: Text('Phone: +31617873081\nEmail: pgandhi2022@ash.nl\nAddress: American School of The Hague, The Netherlands, Wassenaar', style: TextStyle(fontSize: 18)),
+      appBar: AppBar(title: const Text('Contact Us')), // AppBar for Contact page
+      body: Padding(
+        padding: const EdgeInsets.all(20), // Padding for the body
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start, // Align text to the left
+          children: const [
+            Text('📍 Address: American School of The Hague, Wassenaar, The Netherlands'),
+            SizedBox(height: 10), // Space between lines
+            Text('📞 Phone: +31617873081'),
+            SizedBox(height: 10),
+            Text('📧 Email: pgandhi2022@ash.nl'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// OrderPage widget for displaying the order summary and options to place an order.
+class OrderPage extends StatelessWidget {
+  const OrderPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    var appState = context.watch<MyAppState>(); // Access app state to get cart and balance info
+
+    // Generate list of ordered items from the cart
+    List<Widget> orderedItems = appState.cart.map((item) {
+      return ListTile(
+        title: Text('${item['name']} (x${item['quantity']})'), // Display item name and quantity
+        subtitle: Text('\$${(item['price'] * item['quantity']).toStringAsFixed(2)}'), // Display price
+      );
+    }).toList();
+
+    // Controller to allow the user to update their balance
+    TextEditingController balanceController = TextEditingController();
+    balanceController.text = appState.bankBalance.toStringAsFixed(2); // Set initial balance text
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Order Summary'), // AppBar for Order Summary page
+        backgroundColor: Colors.green, // Custom AppBar color
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20), // Padding for the body
+        child: Center( // Center-align the column content
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center, // Center the column elements
+            children: [
+              // Display the current balance with bold font
+              Text(
+                'Current Balance: \$${appState.bankBalance.toStringAsFixed(2)}',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20), // Space between balance display and input field
+              
+              // TextField for updating balance
+              TextField(
+                controller: balanceController, // Link the controller to the TextField
+                keyboardType: TextInputType.number, // Allow only number input
+                decoration: InputDecoration(
+                  labelText: 'Update Balance', // Label for the input field
+                  border: OutlineInputBorder(), // Border for the TextField
+                ),
+                onChanged: (newValue) {
+                  // When the balance input changes, update the balance in the app state
+                  double newBalance = double.tryParse(newValue) ?? appState.bankBalance; 
+                  appState.updateBalance(newBalance); // Update balance in app state
+                },
+              ),
+              const SizedBox(height: 20),
+
+              // Display each ordered item
+              ...orderedItems,
+
+              // Display the tax and delivery fee
+              const SizedBox(height: 20),
+              Text(
+                'Tax (21%): \$${(appState.calculateTotalCost() - appState.calculateTotalCost() / (1 + MyAppState.dutchTax)).toStringAsFixed(2)}', // Calculate and display tax
+              ),
+              const SizedBox(height: 10),
+              Text('Delivery Fee: \$${MyAppState.deliveryFee.toStringAsFixed(2)}'), // Display delivery fee
+              const SizedBox(height: 20),
+
+              // Display the total cost of the order
+              Text(
+                'Total: \$${appState.calculateTotalCost().toStringAsFixed(2)}',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold), // Bold total cost
+              ),
+              const SizedBox(height: 20),
+
+              // Button to place the order
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                onPressed: (appState.bankBalance >= appState.calculateTotalCost() && appState.cart.isNotEmpty) // Only enable button if balance is sufficient and cart is not empty
+                    ? () {
+                        appState.placeOrder(); // Place the order and deduct from balance
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Order Placed'), // Dialog title
+                            content: const Text('Your order has been placed successfully.'), // Dialog content
+                            actions: <Widget>[
+                              TextButton(
+                                child: const Text('OK'),
+                                onPressed: () => Navigator.pop(context), // Close dialog
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                    : null, // Disable button if conditions are not met
+
+                child: const Text('Place Order'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

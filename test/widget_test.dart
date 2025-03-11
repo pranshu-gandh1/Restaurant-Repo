@@ -1,7 +1,6 @@
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
-import 'package:restaurant/main.dart'; // Ensure the correct import path
+import 'package:restaurant/main.dart'; // Use the correct project name
 
 void main() {
   testWidgets('Restaurant Menu test', (WidgetTester tester) async {
